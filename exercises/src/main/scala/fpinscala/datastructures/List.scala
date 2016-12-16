@@ -1,5 +1,7 @@
 package fpinscala.datastructures
 
+import scala.annotation.tailrec
+
 sealed trait List[+A]
 
 // `List` data type, parameterized on a type, `A`
@@ -61,7 +63,10 @@ object List {
     case Cons(_, t) => t
   }
 
-  def setHead[A](l: List[A], h: A): List[A] = sys.error("todo")
+  def setHead[A](l: List[A], h: A): List[A] = l match {
+    case Nil => sys.error("list是空的")
+    case Cons(oh, t) => Cons(h, t)
+  }
 
   def drop[A](l: List[A], n: Int): List[A] = if (n == 0) {
     l
@@ -89,9 +94,46 @@ object List {
       Cons(h, init(t))
   }
 
-  def length[A](l: List[A]): Int = sys.error("todo")
+  def length[A](l: List[A]): Int = foldRight(l, 0)((_, c) => c + 1)
 
-  def foldLeft[A, B](l: List[A], z: B)(f: (B, A) => B): B = sys.error("todo")
+  def foldLeft[A, B](l: List[A], z: B)(f: (B, A) => B): B = {
+    @tailrec
+    def c(head: A, right: List[A], v: B): B = {
+      val nv = f(v, head)
+      right match {
+        case Nil =>
+          nv
+        case Cons(h, r) =>
+          c(h, r, nv)
+      }
+    }
 
-  def map[A, B](l: List[A])(f: A => B): List[B] = sys.error("todo")
+    l match {
+      case Nil =>
+        z
+      case Cons(h, r) =>
+        c(h, r, z)
+    }
+
+//    @tailrec
+//    def c2(list: List[A], v: B): B = {
+//      list match {
+//        case Nil =>
+//          v
+//        case Cons(head, right) =>
+//          val nv = f(v, head)
+//          right match {
+//            case Nil =>
+//              nv
+//            case Cons(h, r) =>
+//              c2(right, nv)
+//          }
+//      }
+//    }
+//
+//    c2(l, z)
+
+  }
+
+  def map[A, B](l: List[A])(f: A => B): List[B] = foldRight(l, Nil: List[B])((e, r) => Cons(f(e), r))
 }
