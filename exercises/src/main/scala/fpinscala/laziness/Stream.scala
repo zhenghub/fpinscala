@@ -1,6 +1,8 @@
 package fpinscala.laziness
 
 import Stream._
+
+import scala.annotation.tailrec
 trait Stream[+A] {
 
   def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
@@ -17,11 +19,42 @@ trait Stream[+A] {
     case Empty => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
   }
-  def take(n: Int): Stream[A] = sys.error("todo")
 
-  def drop(n: Int): Stream[A] = sys.error("todo")
+  def toList: List[A] = this match {
+    case Empty => Nil
+    case Cons(h, t) => h() :: t().toList
+  }
 
-  def takeWhile(p: A => Boolean): Stream[A] = sys.error("todo")
+  def take(n: Int): Stream[A] = n match {
+    case 0 => Empty
+    case _ =>
+      this match {
+        case Empty => Empty
+        case Cons(h, t) =>
+          Cons(h, () => t().take(n - 1))
+      }
+  }
+
+  def drop(n: Int): Stream[A] = n match {
+    case 0 => this
+    case _ =>
+      this match {
+        case Empty => Empty
+        case Cons(h, t) =>
+          t().drop(n - 1)
+      }
+  }
+
+  def takeWhile(p: A => Boolean): Stream[A] = this match {
+    case Empty => Empty
+    case Cons(h, t) =>
+      val v = h()
+      if(p(v)) {
+        Cons(() => v, () => t().takeWhile(p))
+      } else {
+        cons(v, Empty)
+      }
+  }
 
   def forAll(p: A => Boolean): Boolean = sys.error("todo")
 
