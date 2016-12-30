@@ -52,7 +52,7 @@ trait Stream[+A] {
       if(p(v)) {
         Cons(() => v, () => t().takeWhile(p))
       } else {
-        cons(v, Empty)
+        Empty
       }
   }
 
@@ -85,4 +85,10 @@ object Stream {
   def from(n: Int): Stream[Int] = sys.error("todo")
 
   def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] = sys.error("todo")
+}
+
+object TestSteam {
+  def main(args: Array[String]): Unit = {
+    assert(Stream(1, 2, 3).takeWhile(_ < 3).toList == List(1, 2))
+  }
 }
