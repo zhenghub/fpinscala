@@ -140,7 +140,21 @@ trait Stream[+A] {
     }
   }
 
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
+  def startsWith[B](s: Stream[B]): Boolean = zipAllUnfold(s).takeWhile(_._2.isDefined).forAll(p => p._1.isDefined && p._1.get == p._2.get)
+
+  def tails: Stream[Stream[A]] = Stream.unfold(this) {
+    case Empty =>
+      None
+    case s @ Cons(_, t) =>
+      Some(s, t())
+  }
+
+  def scanRight[B](z: => B)(f: (A, => B) => B): Stream[B] = this match {
+    case Empty => cons(z, Empty)
+    case Cons(fe, t) =>
+      lazy val r = t().scanRight(z)(f)
+      cons(f(fe(), r.headOption.get), r)
+  }
 }
 
 case object Empty extends Stream[Nothing]
@@ -223,5 +237,8 @@ object TestSteam {
     }.take(5).toList == List(0, 1, 1, 2, 3))
     assert(Stream.fibs.take(5).toList == Stream.fibsUnfold.take(5).toList)
     assert(Stream.fromUnfold(2).take(3).toList == List(2, 3, 4))
+    assert(Stream(1, 2, 3).tails.map(_.toList).toList == List(List(1, 2, 3), List(2, 3), List(3)))
+
+    assert(Stream(1, 2, 3).scanRight(0)(_ + _).toList == List(6, 5, 3, 0))
   }
 }
